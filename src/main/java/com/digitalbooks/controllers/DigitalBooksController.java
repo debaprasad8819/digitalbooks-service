@@ -32,6 +32,8 @@ import com.digitalbooks.models.Book;
 import com.digitalbooks.models.Payment;
 import com.digitalbooks.models.User;
 import com.digitalbooks.payload.request.BookRequest;
+import com.digitalbooks.payload.request.RefundRequest;
+import com.digitalbooks.payload.request.UpdateRequest;
 import com.digitalbooks.services.DigitalBooksService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,6 +61,8 @@ public class DigitalBooksController  {
 		return responseEntity;
 	}
 	
+	
+	
 	@PreAuthorize("hasRole('ROLE_READER')")
 	@GetMapping("/searchBooks") 
 	@ResponseBody
@@ -77,8 +81,7 @@ public class DigitalBooksController  {
 		});
 		
 
-//		String json = new ObjectMapper().writeValueAsString(payload);
-//		System.out.println(json);
+
 		ResponseEntity responseEntity = new ResponseEntity(payload , HttpStatus.OK);
 		
 		return responseEntity;
@@ -89,19 +92,16 @@ public class DigitalBooksController  {
 	@ResponseBody
 	public ResponseEntity  buyBooks(@Valid @RequestBody BookRequest bookRequst)  {
 		
-		System.out.println("Hitting the Response entity@@@@@@@@");
+		
 		Long price1=Long.parseLong(bookRequst.getBookId());
 		Boolean isUserAvailable=digitalBooksService.isUserAvailable(bookRequst.getUsername());
 		Boolean isBookAvailable=digitalBooksService.isBookAvailable(price1);
 		Map<String,Long> respayload= new HashMap<String,Long>();
-		System.out.println("Hitting the Response entity11111111"+isBookAvailable);
+		
 		if(isUserAvailable && isBookAvailable) {
 			Book book = digitalBooksService.getBookByBookId(price1);
 			Optional<User> optional = digitalBooksService.getUserByName(bookRequst.getUsername());
 			
-			System.out.println("------------------------------");
-			System.out.println("Optionlal User::"+optional);
-			System.out.println("Book retrive::"+book);
 			Payment payment = new Payment();
 			User user =optional.get();
 			
@@ -110,12 +110,12 @@ public class DigitalBooksController  {
 			payment.setBookId(book.getBookId());
 			payment.setReaderId(user.getId());
 			  payment =digitalBooksService.save(payment);
-			System.out.println(payment.getBookId()+"-------------------@@@@");
+			
 			
 			
 			respayload.put("pamentId", payment.getPaymentId());
 			respayload.put("bookId", payment.getBookId());
-			System.out.println("respayload in controller:"+respayload);
+			
 		
 		}		
 		ResponseEntity responseEntity = new ResponseEntity(respayload , HttpStatus.OK);
@@ -159,15 +159,50 @@ public class DigitalBooksController  {
 		return responseEntity;
 	}
 	
+	@PreAuthorize("hasRole('ROLE_READER')")
+	@GetMapping("/readers/{email}/books/paymentId/{paymentId}") 
+	@ResponseBody
+	public ResponseEntity getBookByPaymentid(@PathVariable("email") String email,@PathVariable("paymentId") String paymentId) throws JsonProcessingException {
+		
+		Long payemntid = Long.parseLong(paymentId);
+		Map<String,String> mapString = digitalBooksService.findBookByPaymentId(email,payemntid);
+	
+		ResponseEntity responseEntity = new ResponseEntity(mapString ,HttpStatus.OK);
+		
+		return responseEntity;
+	}
+	
 	
 	@PreAuthorize("hasRole('ROLE_AUTHOR')")
-	@PutMapping("/editBook") 
+	@PutMapping("/updateBook") 
 	@ResponseBody
-	public ResponseEntity updateBook(@RequestBody Book b) throws JsonProcessingException {
+	public ResponseEntity updateBook(@Valid @RequestBody UpdateRequest updateRequest)  {
+		Map<String,String> mapString = new HashMap<String,String>();
+		Long bookId = Long.parseLong(updateRequest.getBookId());
+		Boolean isBook =  digitalBooksService.isBookAvailable(bookId);
+		if(!isBook) {
+			mapString.put("Decription", "Book is not available");
+		}else {
+			String msge= digitalBooksService.updateRequest(updateRequest);
+			mapString.put("Decription",msge);
+		}
 		
-		//Long bookId1 = Long.parseLong(bookId);
-		Map<String,String> mapString = digitalBooksService.readContent(email,bookId1);
+		ResponseEntity responseEntity = new ResponseEntity(mapString ,HttpStatus.OK);
+		
+		return responseEntity;
+	}
 	
+	@PreAuthorize("hasRole('ROLE_READER')")
+	@PutMapping("/refund") 
+	@ResponseBody
+	public ResponseEntity refund(@RequestBody RefundRequest refundRequest)  {
+		Map<String,String> mapString = new HashMap<String,String>();
+		System.out.println("Refund request:###"+refundRequest);
+		String  msge =  digitalBooksService.paymentRequest(refundRequest);
+		if(msge!=null) {
+			mapString.put("Decription", msge);
+		}
+		
 		ResponseEntity responseEntity = new ResponseEntity(mapString ,HttpStatus.OK);
 		
 		return responseEntity;

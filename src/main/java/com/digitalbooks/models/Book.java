@@ -16,9 +16,7 @@ import javax.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
-@Table(	name = "books",uniqueConstraints = { 
-		@UniqueConstraint(columnNames = "title")
-	})
+@Table(	name = "books")
 @Data
 public class Book {
 
@@ -26,25 +24,32 @@ public class Book {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long bookId;
 	
-	@NotBlank
-	@Size(max = 50)
+
 	private String title;
-	@NotBlank
-	@Size(max = 50)
+
 	private String catagory;
+	
+	
 	
 	private Integer price;
 	private Boolean isBlocked;
-	@NotBlank
+	public Boolean getIsBlocked() {
+		return isBlocked;
+	}
+	public void setIsBlocked(Boolean isBlocked) {
+		this.isBlocked = isBlocked;
+	}
+	
 	private String publisher;
 
 	private Boolean active;
 	
-	@NotBlank
+	
+	
 	private String content;
-	@NotBlank
+	
 	private String author;
-	@NotBlank
+	
 	private String publishedDate;
 	
 	public Integer getPrice() {
@@ -81,12 +86,7 @@ public class Book {
 	public void setPublisher(String publisher) {
 		this.publisher = publisher;
 	}
-	public boolean isActive() {
-		return active;
-	}
-	public void setActive(boolean active) {
-		this.active = active;
-	}
+	
 	public String getContent() {
 		return content;
 	}
@@ -105,6 +105,13 @@ public class Book {
 	public void setPublishedDate(String publishedDate) {
 		this.publishedDate = publishedDate;
 	}
+	public Boolean getActive() {
+		return active;
+	}
+	public void setActive(Boolean active) {
+		this.active = active;
+	}
+	
 	
 	
 }
